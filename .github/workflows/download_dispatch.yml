@@ -31,6 +31,21 @@ on:
         default: ''
         required: false
 
+      PDF_OPTION:
+        description: '是否要下载后将图片合并为pdf文件'
+        required: false
+        type: choice
+        options:
+          - 否
+          - 是 | 本子维度合并pdf
+          - 是 | 章节维度合并pdf
+
+      PDF_NAME_RULE:
+        type: string
+        description: 'PDF文件命名规则。支持字段如 Aid, Atitle, Pindex, Pid, Ptitle'
+        default: ''
+        required: false
+
       ZIP_NAME:
         type: string
         default: 本子.tar.gz
@@ -68,6 +83,8 @@ jobs:
       ZIP_NAME: ${{ github.event.inputs.ZIP_NAME }}
       UPLOAD_NAME: ${{ github.event.inputs.UPLOAD_NAME }}
       IMAGE_SUFFIX: ${{ github.event.inputs.IMAGE_SUFFIX }}
+      PDF_OPTION: ${{ github.event.inputs.PDF_OPTION }}
+      PDF_NAME_RULE: ${{ github.event.inputs.PDF_NAME_RULE }}
 
       # 登录相关secrets
       JM_USERNAME: ${{ secrets.JM_USERNAME }}
@@ -94,6 +111,11 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements-dev.txt
+
+      - name: Install img2pdf
+        if: inputs.PDF_OPTION != '否'
+        run: |
+          pip install img2pdf
 
       - name: 安装jmcomic（pip）
         if: ${{ github.ref != 'refs/heads/dev' }}
