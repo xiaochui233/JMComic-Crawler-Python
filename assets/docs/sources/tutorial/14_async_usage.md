@@ -1,5 +1,10 @@
 # 异步使用指南
 
+> [!TIP]
+> 关于`async`和`sync`版本的性能对比可以查看 → [actions-benchmark](https://github.com/hect0x7/JMComic-Crawler-Python/actions/workflows/benchmark.yml)
+>
+> 简单来说，下载场景`async`**快10%↑**，纯查询无下载场景`async`**快30%↑**
+
 本章节介绍项目中提供的异步接口。章节结构与 `0_common_usage.md` 基本对应，可作为从同步迁移到异步代码的对照参考。
 
 ---
@@ -14,7 +19,10 @@ import jmcomic
 
 async def main():
     # 异步下载单个本子
-    await jmcomic.download_album_async('438696')
+    album, downloader = await jmcomic.download_album_async('438696')
+
+    # 返回的 downloader 已释放网络连接和线程池，只用于读取下载结果
+    print(downloader.download_failed_image)
     
     # 异步下载单章节
     await jmcomic.download_photo_async('438696')
@@ -48,20 +56,33 @@ asyncio.run(main())
 
 ### 💡 关于 async with 和自动初始化
 
-当你使用异步客户端时，推荐直接搭配 `async with` 上下文管理器来使用：
+当你使用异步client时，推荐直接搭配 `async with` 上下文管理器来使用：
 
 ```python
-# 离开代码块时会自动清理并断开连接
+# 推荐用法，离开代码块时会自动清理并断开连接
 async with JmOption.default().new_jm_async_client() as cl:
     album = await cl.get_album_detail(123)
+
+# 另外一种用法，单独使用client
+cl = JmOption.default().new_jm_async_client()
+try:
+    album = await cl.get_album_detail(123)
+finally:
+    await cl.close()
 ```
 
-客户端会在你真正发起网络请求时自动初始化：
+`async with` 和单独使用client都会自动初始化，区别主要在初始化时机和生命周期管理：
 
-- **结合 `async with`**：当进入 `async with` 作用域时，客户端会自动完成域名解析、联通性检查等必要的初始化工作，并在离开时安全释放连接。
-- **单独使用**：如果你不想使用 `async with`，而是直接调用 `cl = op.new_jm_async_client()`，那么在第一次发起真实的请求（比如 `get_album_detail`）时，客户端也会自动检测并先执行一遍初始化。
+| 对比项 | 使用 `async with` | 单独使用client                            |
+| --- | --- |-------------------------------------------|
+| 初始化时机 | 进入 `async with` 作用域时自动初始化 | 第一次发起真实请求前自动初始化            |
+| 初始化内容 | 自动完成域名解析、联通性检查等必要工作 | 同左                                      |
+| 初始化次数 | 只初始化一次 | 同左                                      |
+| 连接清理 | 离开作用域时自动安全释放连接 | 使用完成后必须显式调用 `await cl.close()` |
+| 推荐场景 | 推荐用于一般请求和下载任务 | 需要自行控制客户端生命周期时使用          |
 
-无论哪种写法都只会初始化一次，你不需要自己去调用任何初始化代码，直接用就行。
+两种写法都不需要手动调用初始化方法；如果单独使用客户端，请通过 `try/finally` 确保连接一定会被关闭。
+
 
 ---
 
@@ -87,10 +108,6 @@ async def main():
         # 打印结果
         for aid, album in zip(album_id_list, album_list):
             print(f'[JM{aid}] 本子详情: {album}')
-            
-        # 获取章节实体类
-        photo = await cl.get_photo_detail('212214')
-        print(photo.name)
 
 asyncio.run(main())
 ```
@@ -131,7 +148,7 @@ async def main():
     async with JmOption.default().new_jm_async_client() as cl:
         # async for 会帮你自动加载下一页，一页一页往下搜
         async for page in cl.search_gen('+MANA +无修正'):
-            print(f'当前获取到了第 {page.page} 页，本页数据量: {page.page_size}')
+            print(f'当前获取到了第 {page.page_number} 页，本页数据量: {len(page)}，总数量: {page.total}')
             
             for album_id, title in page.iter_id_title():
                 print(f'[{album_id}]: {title}')
@@ -169,24 +186,32 @@ asyncio.run(main())
 
 ## 7. 异步分类 / 排行榜
 
-分类和排行榜本质上都是过滤请求，可以使用 `categories_filter` 异步方法获取分页。
+分类和排行榜本质上都是过滤请求，可以使用 `categories_filter` 获取单页，或使用
+`categories_filter_gen` 异步生成器自动翻页。
 
 ```python
 import asyncio
-from jmcomic import JmOption
+from jmcomic import JmMagicConstants, JmOption
 
 async def main():
     async with JmOption.default().new_jm_async_client() as cl:
         # 获取全部时间、全部分类下，按观看数排序的第一页本子
         page = await cl.categories_filter(
             page=1,
-            time='a',        # JmMagicConstants.TIME_ALL
-            category='all',  # JmMagicConstants.CATEGORY_ALL
-            order_by='mv',   # JmMagicConstants.ORDER_BY_VIEW
+            time=JmMagicConstants.TIME_ALL,
+            category=JmMagicConstants.CATEGORY_ALL,
+            order_by=JmMagicConstants.ORDER_BY_VIEW,
         )
         
         for aid, atitle in page:
             print(aid, atitle)
+
+        async for page in cl.categories_filter_gen(
+            time=JmMagicConstants.TIME_ALL,
+            category=JmMagicConstants.CATEGORY_ALL,
+            order_by=JmMagicConstants.ORDER_BY_VIEW,
+        ):
+            print(f'当前获取到了第 {page.page_number} 页，本页数据量: {len(page)}')
 
 asyncio.run(main())
 ```
@@ -204,3 +229,39 @@ client:
   # 指定异步客户端的底层实现类 (目前仅有: async_api)
   async_impl: async_api
 ```
+
+## 9. 查看下载耗时
+
+异步下载完成后，可以直接查看自己总共等了多久，也可以继续查看具体是哪个本子、章节或图片比较慢。所有 `duration` 的单位都是秒。
+
+```python
+import asyncio
+import jmcomic
+
+
+async def main():
+    result = await jmcomic.download_album_async('438696')
+    album = result.detail
+
+    # 从调用 download_album_async 到返回，总共等了多久
+    print(f'总共等待: {result.duration:.3f} 秒')
+
+    # 如果下载比较慢，可以继续查看具体慢在哪里
+    print(f'下载本子用了: {album.duration:.3f} 秒')
+    for photo in album:
+        print(f'下载章节 {photo.id} 用了: {photo.duration:.3f} 秒')
+        for image in photo:
+            print(f'处理图片 {image.img_file_name} 用了: {image.duration:.3f} 秒')
+
+
+asyncio.run(main())
+```
+
+| 字段 | 它告诉你什么 |
+| --- | --- |
+| `result.duration` | 从调用异步下载方法到返回，你总共等了多久 |
+| `album.duration` | 下载这个本子花了多久，包含获取本子信息和整理下载结果 |
+| `photo.duration` | 下载这个章节花了多久，包含获取或补全章节信息 |
+| `image.duration` | 处理这张图片花了多久，包含检查缓存、下载、解密和保存 |
+
+下载器可能同时处理多个章节或多张图片，所以把它们的耗时全部相加，不会得到本子的耗时，这是正常现象。同步下载中的这些字段含义相同。

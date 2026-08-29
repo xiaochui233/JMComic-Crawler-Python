@@ -19,6 +19,7 @@
 [![GitHub latest releases](https://img.shields.io/github/v/release/hect0x7/JMComic-Crawler-Python?color=blue&label=version)](https://github.com/hect0x7/JMComic-Crawler-Python/releases/latest)
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/jmcomic?style=flat&color=hotpink)](https://pepy.tech/projects/jmcomic)
 [![Licence](https://img.shields.io/github/license/hect0x7/JMComic-Crawler-Python?color=red)](https://github.com/hect0x7/JMComic-Crawler-Python)
+[![Used by](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fhect0x7%2Fhect0x7%2Fused-by%2Fmanifest.json&query=%24.public_dependents&label=used%20by&color=6f42c1&style=flat)](https://github.com/hect0x7/JMComic-Crawler-Python/network/dependents)
 
 </div>
 
@@ -52,16 +53,17 @@
 
 - ログイン
 - アルバム検索（すべての検索条件をサポート）
-- 画像のダウンロードおよびデコード
+- アルバムコメントの取得（返信、ネタバレ表示を含む）
 - カテゴリ / ランキング
-- アルバム / 各チャプター（エピソード）の詳細
+- アルバム / 各チャプター（エピソード）の詳細を取得
+- 画像のダウンロードおよびデコード
 - 個人のお気に入り
 - インターフェースの暗号化・復号化（APP API）
 
 ## インストール手順
 
 > ⚠ まだPythonをインストールしていない場合は、先に [公式のPythonページからダウンロード](https://www.python.org/downloads/) してインストールをお願いします。
-> **Python 3.12以上の使用を推奨します**
+> **Python 3.14の使用を推奨します**
 
 * 公式 pip ソースからインストール（推奨。アップデートもこのコマンドを使用します）
 
@@ -213,9 +215,9 @@ jmv 350234 -y
 
 ## プロジェクトの特色
 
-- **Async と Sync の両方の API に対応**
 - **Cloudflareのボット対策のバイパス機能**
 - **JM APP インターフェースの最新暗号化アルゴリズムを実装 (1.6.3)**
+- **Async** と **Sync** の2種類の API に対応
 - 様々な利用方法のサポート：
 
   - GitHub Actions: Web上でアルバムIDを直接入力してダウンロード（[チュートリアル：GitHub Actions経由でのダウンロード](../docs/sources/tutorial/1_github_actions.md)）
@@ -223,6 +225,7 @@ jmv 350234 -y
   - Pythonコード: 最も本質的かつ強力な利用法（一定のPythonプログラミング知識が必要です）
 - **Web版**と**モバイル版**の2つのクライアントをサポートし、設定から簡単に切り替え可能（**モバイル版はIP制限がなく圧倒的な互換性を持ち、Web版はエリア制限があるものの高効率**）
 - **自動再試行およびドメイン切り替えメカニズム**のサポート
+- ダウンロードタスク単位での構造化ログ収集に対応
 - **マルチスレッドダウンロード**（各画像ごとにスレッドの細分化が可能。驚異的な効率）
 - **強力な設定オプション**
 
@@ -241,8 +244,9 @@ jmv 350234 -y
 
 ## ご利用上の注意点
 
-* **Python 3.12以上**を推奨します。現在の最小互換バージョンは3.9です。
-  > 注意: Python 3.9 およびそれ以前のバージョンは2025年に完全にサポート終了 (EOL) となっており、3.9以下のバージョンを使用すると、サードパーティ製ライブラリの非互換性の問題がいつでも発生する可能性があります。
+* **Python 3.14**を推奨します。現在、CI は Python 3.10 以降のみを対象としています。
+  > [!NOTE]
+  > Python 3.9 およびそれ以前のバージョンは公式サポートが終了 (EOL) しており、3.9以下のバージョンを使用すると、サードパーティ製ライブラリの非互換性の問題がいつでも発生する可能性があります。Python 3.9 はインストール互換性を維持しますが、CI の対象外です。
 
 * 個人のプロジェクトであるため、ドキュメントやサンプルコードの更新が遅れることがあります。ご不明な点はIssueにてご質問ください。
 
@@ -268,3 +272,21 @@ jmv 350234 -y
     <img alt="Repo Card" src="https://github-readme-stats.vercel.app/api/pin/?username=tonquer&repo=JMComic-qt" />
   </picture>
 </a>
+
+## jmcomic を使用しているプロジェクト
+
+<a href="https://github.com/hect0x7/hect0x7/tree/used-by">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/hect0x7/hect0x7/used-by/showcase/ja-dark.svg" />
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/hect0x7/hect0x7/used-by/showcase/ja-light.svg" />
+    <img width="100%" alt="jmcomic を使用しているプロジェクト" src="https://raw.githubusercontent.com/hect0x7/hect0x7/used-by/showcase/ja-light.svg" />
+  </picture>
+</a>
+
+## Star History
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/hect0x7/hect0x7/output/profile/star-history-dark.svg" />
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/hect0x7/hect0x7/output/profile/star-history.svg" />
+  <img width="100%" alt="jmcomic エコシステム Star History" src="https://raw.githubusercontent.com/hect0x7/hect0x7/output/profile/star-history.svg" />
+</picture>

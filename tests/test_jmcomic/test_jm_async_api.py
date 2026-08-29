@@ -21,26 +21,36 @@ class Test_Async_Api(JmAsyncTestConfigurable):
     def test_async_download_photo_by_id(self):
         """测试 download_photo_async：验证返回值与同步版本保持一致"""
         photo_id = '438516'
+
         # sync
         sync_photo, sync_dler = download_photo(photo_id, self.option)
         # async
-        async_photo, async_dler = asyncio.run(download_photo_async(photo_id, self.option))
+        async_photo, async_dler = asyncio.run(download_photo_async(
+            photo_id,
+            self.option,
+        ))
 
         self.assertIsInstance(async_dler, JmAsyncDownloader, 'downloader 必须是异步版本')
         self.assertIsInstance(async_photo, JmPhotoDetail, '返回值必须包含 photo')
         self.assert_sync_async_equal(sync_photo.photo_id, async_photo.photo_id, 'photo.photo_id')
+        self.assertIsNone(async_dler.client, '顶层异步下载结束后 downloader client 应已关闭')
 
     def test_async_download_album_by_id(self):
         """测试 download_album_async：验证返回值与同步版本保持一致"""
         album_id = '438516'
+
         # sync
         sync_album, sync_dler = download_album(album_id, self.option)
         # async
-        async_album, async_dler = asyncio.run(download_album_async(album_id, self.option))
+        async_album, async_dler = asyncio.run(download_album_async(
+            album_id,
+            self.option,
+        ))
 
         self.assertIsInstance(async_dler, JmAsyncDownloader, 'downloader 必须是异步版本')
         self.assertIsInstance(async_album, JmAlbumDetail, '返回值必须包含 album')
         self.assert_album_equal(sync_album, async_album)
+        self.assertIsNone(async_dler.client, '顶层异步下载结束后 downloader client 应已关闭')
 
     def test_async_batch(self):
         """测试 download_batch_async：验证返回集合大小与同步版本保持一致"""

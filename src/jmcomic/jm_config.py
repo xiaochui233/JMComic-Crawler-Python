@@ -1,9 +1,45 @@
 from __future__ import annotations
 
 import logging
+
 from common import time_stamp, field_cache, ProxyBuilder
 
+from .jm_task_context import JM_TASK_CONTEXT, get_jm_task_context
+
 jm_logger = logging.getLogger('jmcomic')
+
+
+class JmLogFormatter(logging.Formatter):
+    """Format the stable correlation fields from a JM task context."""
+
+    @staticmethod
+    def _task_context_prefix(context) -> str:
+        if not isinstance(context, dict):
+            return ''
+
+        fields = []
+        task_id = context.get('task_id')
+        if task_id is None:
+            # 没有 task_id 时，默认不打印 task_context，保持日志简洁
+            return ''
+        fields.append(f'task_id={task_id}')
+
+        # 内置字段
+        download_type = context.get('download_type')
+        jm_id = context.get('jm_id')
+        if download_type is not None and jm_id is not None:
+            fields.append(f'{download_type}={jm_id}')
+        elif download_type is not None:
+            fields.append(f'download_type={download_type}')
+        elif jm_id is not None:
+            fields.append(f'jm_id={jm_id}')
+
+        return f'[{"; ".join(fields)}] ' if fields else ''
+
+    def format(self, record):
+        # noinspection PyTypeChecker
+        record.jm_task_context_prefix = self._task_context_prefix(getattr(record, JM_TASK_CONTEXT.name, None))
+        return super().format(record)
 
 
 def shuffled(lines):
@@ -19,7 +55,7 @@ def setup_default_jm_logger():
     if not jm_logger.handlers:
         import sys
         handler = logging.StreamHandler(sys.stdout)
-        formatter = logging.Formatter('[%(asctime)s] [%(threadName)s]:【%(topic)s】%(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+        formatter = JmLogFormatter(JmModuleConfig.VAR_LOG_FMT, datefmt='%Y-%m-%d %H:%M:%S')
         handler.setFormatter(formatter)
         jm_logger.addHandler(handler)
         jm_logger.setLevel(logging.INFO)
@@ -30,7 +66,10 @@ def default_jm_logging(topic: str, msg, e: BaseException | None = None):
     if isinstance(msg, BaseException):
         e = msg
         msg = str(msg)
-    extra = {'topic': topic}
+    extra = {
+        'topic': topic,
+        JM_TASK_CONTEXT.name: get_jm_task_context(),
+    }
     if e is not None:
         jm_logger.error(msg, extra=extra, exc_info=e)
     else:
@@ -103,7 +142,7 @@ class JmMagicConstants:
     APP_TOKEN_SECRET_2 = '18comicAPPContent'
     APP_DATA_SECRET = '185Hcomic3PAPP7R'
     API_DOMAIN_SERVER_SECRET = 'diosfjckwpqpdfjkvnqQjsik'
-    APP_VERSION = '2.0.26'
+    APP_VERSION = '2.1.2'
 
 
 # 模块级别共用配置
@@ -154,10 +193,10 @@ class JmModuleConfig:
 
     # 移动端API域名
     DOMAIN_API_LIST = shuffled('''
-    www.cdnaspa.club
-    www.cdnaspa.vip
-    www.cdnplaystation6.cc
-    www.cdnplaystation6.vip
+    www.cdnhjk.net
+    www.cdngwc.cc
+    www.cdngwc.net
+    www.cdngwc.club
     ''')
 
     DOMAIN_API_UPDATED_LIST = None
@@ -214,6 +253,7 @@ class JmModuleConfig:
 
     # 模块级别的可重写类配置
     CLASS_DOWNLOADER = None
+    CLASS_ASYNC_DOWNLOADER = None
     CLASS_OPTION = None
     CLASS_ALBUM = None
     CLASS_PHOTO = None
@@ -259,6 +299,8 @@ class JmModuleConfig:
     # 当发生 oserror: [Errno 36] File name too long 时，
     # 把文件名限制在指定个字符以内
     VAR_FILE_NAME_LENGTH_LIMIT = 100
+    # 日志格式
+    VAR_LOG_FMT = '[%(asctime)s] [%(threadName)s]:%(jm_task_context_prefix)s【%(topic)s】%(message)s'  # 默认不打印
 
     @classmethod
     def downloader_class(cls):
@@ -267,6 +309,14 @@ class JmModuleConfig:
 
         from .jm_downloader import JmDownloader
         return JmDownloader
+
+    @classmethod
+    def async_downloader_class(cls):
+        if cls.CLASS_ASYNC_DOWNLOADER is not None:
+            return cls.CLASS_ASYNC_DOWNLOADER
+
+        from .jm_async_downloader import JmAsyncDownloader
+        return JmAsyncDownloader
 
     @classmethod
     def option_class(cls):
@@ -370,37 +420,21 @@ class JmModuleConfig:
     @classmethod
     def get_html_domain_all_via_github(cls,
                                        postman=None,
-                                       template='https://jmcmomic.github.io/go/{}.html',
-                                       index_range=(300, 309)
+                                       *deprecated_args,
+                                       **deprecated_kwargs,
                                        ):
         """
-        通过禁漫官方的github号的repo获取最新的禁漫域名
-        https://github.com/jmcmomic/jmcmomic.github.io
+        已废弃：原 GitHub 仓库不再提供禁漫域名。
+        为保持兼容，当前转发到 get_html_domain_all；该方法将在未来版本移除。
         """
-        postman = postman or cls.new_postman(headers={
-            'authority': 'github.com',
-            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 '
-                          'Safari/537.36'
-        })
-        domain_set = set()
-
-        def fetch_domain(url):
-            resp = postman.get(url, allow_redirects=False)
-            text = resp.text
-            from .jm_toolkit import JmcomicText
-            for domain in JmcomicText.analyse_jm_pub_html(text):
-                if domain.startswith('jm365'):
-                    continue
-                domain_set.add(domain)
-
-        from common import multi_thread_launcher
-
-        multi_thread_launcher(
-            iter_objs=[template.format(i) for i in range(*index_range)],
-            apply_each_obj_func=fetch_domain,
+        import warnings
+        warnings.warn(
+            'get_html_domain_all_via_github is deprecated because the GitHub repository no longer provides '
+            'JMComic domains; use get_html_domain_all instead.',
+            DeprecationWarning,
+            stacklevel=2,
         )
-
-        return domain_set
+        return cls.get_html_domain_all(postman)
 
     @classmethod
     def new_html_headers(cls, domain='18comic.vip'):
@@ -581,8 +615,8 @@ jm_log = JmModuleConfig.jm_log
 disable_jm_log = JmModuleConfig.disable_jm_log
 
 
-class PrettyFormatter(logging.Formatter):
-    """带 ANSI 颜色的日志格式化器，按 topic 前缀分配颜色"""
+class PrettyFormatter(JmLogFormatter):
+    """带 ANSI 颜色的日志格式化器，按 topic 前缀分配颜色。"""
 
     TOPIC_COLORS = {
         'album': '\033[1;36m',  # 青色加粗 — 本子级别
@@ -597,7 +631,10 @@ class PrettyFormatter(logging.Formatter):
     RESET = '\033[0m'
 
     def __init__(self):
-        super().__init__(fmt='[%(asctime)s] %(message)s', datefmt='%H:%M:%S')
+        super().__init__(
+            fmt='[%(asctime)s] %(jm_task_context_prefix)s%(message)s',
+            datefmt='%H:%M:%S',
+        )
 
     def format(self, record):
         topic = getattr(record, 'topic', '')
@@ -606,7 +643,6 @@ class PrettyFormatter(logging.Formatter):
         elif record.levelno >= logging.WARNING:
             color = self.WARN_COLOR
         else:
-            # 按 topic 前缀匹配颜色
             color = next(
                 (c for prefix, c in self.TOPIC_COLORS.items()
                  if topic.startswith(prefix)),

@@ -2,12 +2,12 @@ name: Async Benchmark
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ master ]
     paths:
       - '**/*async*.py'
       - '.github/workflows/benchmark.yml'
   pull_request:
-    branches: [ main, master ]
+    branches: [ master ]
     paths:
       - '**/*async*.py'
       - '.github/workflows/benchmark.yml'
@@ -24,12 +24,12 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.12'
+        python-version: '3.14'
 
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements-dev.txt
+        pip install -r .github/requirements-dev.txt
         pip install -e .
 
     - name: Run Performance Benchmark
@@ -38,7 +38,7 @@ jobs:
         no_proxy: '*'
       run: python usage/benchmark_async_vs_sync.py
 
-    - name: Publish Report to Step Summary
+    - name: Publish Conclusion-first Report
       if: always()
       run: |
         if [ -f PERFORMANCE_REPORT.md ]; then

@@ -19,6 +19,7 @@
 [![GitHub latest releases](https://img.shields.io/github/v/release/hect0x7/JMComic-Crawler-Python?color=blue&label=version)](https://github.com/hect0x7/JMComic-Crawler-Python/releases/latest)
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/jmcomic?style=flat&color=hotpink)](https://pepy.tech/projects/jmcomic)
 [![Licence](https://img.shields.io/github/license/hect0x7/JMComic-Crawler-Python?color=red)](https://github.com/hect0x7/JMComic-Crawler-Python)
+[![Used by](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fhect0x7%2Fhect0x7%2Fused-by%2Fmanifest.json&query=%24.public_dependents&label=used%20by&color=6f42c1&style=flat)](https://github.com/hect0x7/JMComic-Crawler-Python/network/dependents)
 
 </div>
 
@@ -52,16 +53,17 @@ In addition to downloading, other JM interfaces are also implemented on demand. 
 
 - Login
 - Search albums (supports all search parameters)
-- Image downloading and decoding
+- Album comments (including replies and spoiler flags)
 - Categories/Rankings
-- Album/Chapter details
+- Get album/chapter details
+- Image downloading and decoding
 - Personal favorites
 - Interface encryption and decryption (for the APP API)
 
 ## Installation Guide
 
 > ⚠ If you have not installed Python, you must install Python before executing the following steps. [Download from Python Official Site](https://www.python.org/downloads/)
-> **Version 3.12+ is recommended.**
+> **Python 3.14 is recommended.**
 
 * Install via official pip source (recommended, the update command is identical)
 
@@ -218,9 +220,9 @@ Please check the documentation homepage → [jmcomic.readthedocs.io (Chinese lan
 
 ## Key Features
 
-- **Supports both Async and Sync APIs**
 - **Bypass Cloudflare anti-bot mechanisms**
 - **Implement the latest decryption logic for the JM APP API (1.6.3)**
+- Supports **Async** and **Sync** APIs
 - Multiple usages:
 
   - GitHub Actions: Enter the album ID directly on the webpage to download ([Tutorial: Download JM Albums using GitHub Actions](../docs/sources/tutorial/1_github_actions.md))
@@ -228,6 +230,7 @@ Please check the documentation homepage → [jmcomic.readthedocs.io (Chinese lan
   - Python Code: The most powerful usage, requiring basic Python programming knowledge
 - Supports both **Web** and **Mobile** implementations, switchable via configuration (**Mobile is IP restriction-free and very compatible, Web restricts some IP regions but offers higher efficiency**)
 - Built-in **auto-retry and domain switching** mechanisms
+- Supports structured log collection by download task
 - **Multi-threaded downloading** (can be fine-tuned to one-thread-per-image, greatly boosting speed)
 - **Highly configurable**
 
@@ -246,8 +249,9 @@ Please check the documentation homepage → [jmcomic.readthedocs.io (Chinese lan
 
 ## Prerequisites
 
-* Version **3.12+** is recommended, with a minimum compatible version of 3.9.
-  > Note: Python 3.9 and earlier versions reached their End Of Life (EOL) in 2025. You may encounter third-party library incompatibilities at any time if you use version 3.9 or below.
+* **Python 3.14** is recommended. CI currently only covers Python 3.10 and later.
+  > [!NOTE]
+  > Python 3.9 and earlier versions are no longer officially supported (EOL). You may encounter third-party library incompatibilities at any time if you use version 3.9 or below. Python 3.9 remains install-compatible, but is no longer included in CI.
 
 * Since this is a personal project, the documentation/examples may occasionally be out of sync. Please feel free to open an Issue for any clarifications.
 
@@ -273,3 +277,21 @@ Please check the documentation homepage → [jmcomic.readthedocs.io (Chinese lan
     <img alt="Repo Card" src="https://github-readme-stats.vercel.app/api/pin/?username=tonquer&repo=JMComic-qt" />
   </picture>
 </a>
+
+## Projects using jmcomic
+
+<a href="https://github.com/hect0x7/hect0x7/tree/used-by">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/hect0x7/hect0x7/used-by/showcase/en-dark.svg" />
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/hect0x7/hect0x7/used-by/showcase/en-light.svg" />
+    <img width="100%" alt="Projects using jmcomic" src="https://raw.githubusercontent.com/hect0x7/hect0x7/used-by/showcase/en-light.svg" />
+  </picture>
+</a>
+
+## Star History
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/hect0x7/hect0x7/output/profile/star-history-dark.svg" />
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/hect0x7/hect0x7/output/profile/star-history.svg" />
+  <img width="100%" alt="jmcomic Ecosystem Star History" src="https://raw.githubusercontent.com/hect0x7/hect0x7/output/profile/star-history.svg" />
+</picture>
